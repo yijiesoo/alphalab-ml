@@ -1,0 +1,23 @@
+"""Setup script for alphalab-ml package."""
+
+from setuptools import setup, find_packages
+
+setup(
+    name="alphalab-ml",
+    version="1.0.0",
+    description="ML signal generation and backtesting for alphalab",
+    author="AlphaLab",
+    packages=find_packages(),
+    python_requires=">=3.10",
+    install_requires=[
+        "pandas>=2.0.0,<4",
+        "numpy>=1.24.0,<3",
+        "scikit-learn>=1.3.0,<2",
+        "joblib>=1.3.0,<2",
+        "yfinance>=0.2.0,<2",
+        "pyarrow>=12.0.0,<24",
+        "python-dotenv>=1.0.0,<2",
+        "supabase>=2.0.0,<3",
+        "PyYAML>=6.0.0,<7",
+    ],
+)
