@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import logging
 from pathlib import Path
 from typing import Sequence
@@ -47,7 +48,8 @@ def fetch_prices(
         containing adjusted close prices.
     """
     key = "_".join(sorted(tickers)) + f"_{start}_{end or 'today'}"
-    cache_file = _CACHE_DIR / f"{key[:80]}.parquet"
+    key_hash = hashlib.md5(key.encode()).hexdigest()
+    cache_file = _CACHE_DIR / f"{key_hash}.parquet"
 
     if cache and cache_file.exists():
         log.info("Loading prices from cache: %s", cache_file)

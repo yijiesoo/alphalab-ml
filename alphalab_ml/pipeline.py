@@ -64,7 +64,7 @@ def run(config_path: str | Path | None = None) -> None:
     for path in [model_path, oos_path, latest_path]:
         try:
             upload_file(path)
-        except Exception as exc:  # noqa: BLE001
-            log.warning("Supabase upload skipped (%s): %s", path.name, exc)
+        except (EnvironmentError, OSError, ConnectionError, TimeoutError) as exc:
+            log.warning("Supabase upload skipped (%s): %s", path.name, exc, exc_info=True)
 
     log.info("Pipeline complete.")

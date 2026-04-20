@@ -15,8 +15,13 @@ log = logging.getLogger(__name__)
 
 
 def _client() -> Client:
-    url = os.environ["SUPABASE_URL"]
-    key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
+    url = os.environ.get("SUPABASE_URL")
+    key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+    if not url or not key:
+        raise EnvironmentError(
+            "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set. "
+            "Copy .env.example to .env and fill in the values."
+        )
     return create_client(url, key)
 
 
