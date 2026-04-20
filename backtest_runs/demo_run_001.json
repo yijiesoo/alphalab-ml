@@ -1,0 +1,28 @@
+{
+  "run_id": "demo_run_001",
+  "model_version": "1.0",
+  "timestamp": "2026-04-20T03:45:42.253362+00:00",
+  "rebalance_date": "2026-03-18",
+  "portfolio": {
+    "weights": {
+      "AAPL": 0.1,
+      "BAC": 0.1,
+      "JPM": 0.1,
+      "META": 0.1,
+      "NVDA": 0.1,
+      "TSLA": 0.1
+    },
+    "long_exposure": 0.6,
+    "short_exposure": 0.0,
+    "gross_leverage": 0.6,
+    "coverage": 6
+  },
+  "metrics": {
+    "ic": 0.0,
+    "hit_rate": 0.0,
+    "sharpe": 1.0,
+    "max_dd": -0.15,
+    "turnover": 0.2
+  },
+  "warning": null
+}
