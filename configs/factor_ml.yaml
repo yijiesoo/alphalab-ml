@@ -1,0 +1,14 @@
+horizon_days: 21
+
+split:
+  method: walk_forward
+  train_months: 60
+  valid_months: 12
+  step_months: 1
+
+model:
+  name: ridge
+  alpha: 1.0
+
+universe:
+  file: data/universe/sp500.csv

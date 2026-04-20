@@ -16,6 +16,9 @@ venv/
 /data/
 /artifacts/
 /reports/
+!/data/
+!/data/universe/
+!/data/universe/sp500.csv
 
 # OS
 .DS_Store
