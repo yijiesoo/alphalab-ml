@@ -1,4 +1,4 @@
-horizon_days: 21
+horizon_days: 21 #so it predicts next month returns using todays data since a month consists of 21 trading days 
 
 split:
   method: walk_forward
