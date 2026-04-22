@@ -1,149 +1,120 @@
-# AlphaLab ML - Cross-Sectional Factor ML
+# alphalab-ml
 
-A machine learning pipeline that **ranks stocks by relative strength** using cross-sectional factors.
+Machine learning model package for **alphalab**.
 
-## What It Does
+This repository contains the training/inference code used to generate ML signals/scores that can be optionally consumed by the main `alphalab` application.
 
-**Input:** S&P 500 universe (last 5 years of historical data)  
-**Process:** Train Ridge regression model on cross-sectional factors (momentum, reversal, volatility, moving averages)  
-**Output:** ML scores for each stock (-1 to +1 scale) predicting **next rebalance period outperformance**
+## What this repo is for
 
-### Use Case
-- Generate **ranked stock signals** (e.g., NVDA is top, TSM is bottom)
-- Build **long/short portfolio** based on rankings
-- Rebalance on schedule (daily/weekly/monthly)
-- Measure predictive power via Information Coefficient (IC)
+- Feature engineering for financial time series / factor signals
+- Model training and evaluation
+- Producing prediction outputs / scores for downstream consumption
+- (Optional) Packaging/export so `alphalab` can import or call it
 
-### What It Does NOT Do
-- ❌ Predict absolute returns or market direction
-- ❌ Provide price targets
-- ❌ Replace risk management (diversification required)
-- ❌ Guarantee profits (backtests show historical performance only)
+## Requirements
 
-## Repository Layout
+- Python 3.11+ (recommended)
+- pip or uv
+- (Optional) GPU acceleration depending on your model stack
 
-```
-alphalab_ml/        # Python package
-  config.py         # YAML config loader
-  data.py           # Universe loader + yfinance price downloader
-  features.py       # Cross-sectional factor features (mom, reversal, vol, MA ratio)
-  labels.py         # Forward-return label builder (no look-ahead)
-  dataset.py        # Merge features + labels into tidy ML dataset
-  model.py          # Walk-forward Ridge training + scoring helpers
-  supabase_io.py    # Artifact upload/download via Supabase Storage
-  pipeline.py       # End-to-end pipeline orchestration
-configs/
-  factor_ml.yaml    # Horizon, split, model hyper-parameters
-data/universe/
-  sp500.csv         # Committed universe (ticker list)
-scripts/
-  run_pipeline.py   # CLI entry point
-```
-
-## How to Run Locally
-
-### 1. Install dependencies
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Configure environment variables
+If you use a `pyproject.toml` instead:
 
 ```bash
-cp .env.example .env
-# Edit .env and fill in:
-#   SUPABASE_URL=
-#   SUPABASE_SERVICE_ROLE_KEY=
-#   SUPABASE_STORAGE_BUCKET=alphalab-ml-artifacts
+pip install -e .[dev]
 ```
 
-> **Note:** The Supabase storage bucket should be set to **private**. The pipeline
-> uses the service role key to upload artifacts; do **not** expose that key in
-> client-side code or commit it to the repository.
+## Quick start
 
-### 3. Run the pipeline
+### 1) Train a model
+If your repo provides a training script, run something like:
 
 ```bash
-python scripts/run_pipeline.py
+python -m alphalab_ml.train
 ```
 
-This will:
-1. Download S&P 500 price data via `yfinance` (cached locally in `data/cache/`)
-2. Build cross-sectional features (momentum, reversal, volatility, MA ratios)
-3. Generate forward-return labels (21-trading-day horizon, no look-ahead bias)
-4. Train Ridge regression model using walk-forward backtesting
-5. Score the latest snapshot → `reports/latest_scores.csv`
-6. Store backtest metrics → `backtest_runs/` (JSON format)
-7. Upload model artifacts to Supabase Storage (optional)
-
-**Runtime:** ~2-5 minutes, ~500MB memory (S&P 500, 5 years data)
-
-### 4. Optional: custom config
+Or:
 
 ```bash
-python scripts/run_pipeline.py path/to/my_config.yaml
+python scripts/train.py
 ```
 
-Edit `configs/factor_ml.yaml` to customize:
-- Training/validation/test split
-- Ridge alpha parameter
-- Rebalance frequency
-- Feature selection
-
-## Output Files
-
-| File | Purpose |
-|------|---------|
-| `reports/latest_scores.csv` | Current stock rankings (-1 to +1) |
-| `backtest_runs/*.json` | Backtest metrics (IC, Sharpe, hit rate) |
-| `artifacts/ridge_model.joblib` | Trained Ridge model |
-| `artifacts/manifest.json` | Model metadata (version, training window) |
-
-## Flask API Integration
-
-The package exports 3 query functions for dashboard integration:
-
-```python
-from alphalab_ml import (
-    get_latest_ml_metrics,      # Latest backtest run metrics
-    get_all_ml_backtests,       # Historical backtest runs
-    get_ml_scores_for_ticker    # Individual stock score + rank
-)
-```
-
-See `/flask_app/static/ml_metrics_widget.js` for dashboard widget example.
-
-## Testing
+### 2) Run inference / generate scores
 
 ```bash
-# Run all tests (51 tests across 4 phases)
-pytest tests/ -v
-
-# Run specific test
-pytest tests/test_flask_api.py -v
+python -m alphalab_ml.predict --ticker NVDA
 ```
 
-**All tests passing:** ✅ 51/51
+Or:
 
-## Architecture
+```bash
+python scripts/predict.py --input data/features.parquet --output outputs/scores.csv
+```
 
-### Phase 0: ML Signal Adapter
-- Cross-sectional factor computation (momentum, reversal, volatility, MA ratio)
-- Ranked weight generation with constraints (dollar neutral, max leverage)
-- Turnover control
+> Update the commands above to match the actual module/script names in this repo.
 
-### Phase 1: Backtest Runner
-- Walk-forward validation (no look-ahead bias)
-- Ridge regression training
-- Performance metrics (IC, Sharpe, hit rate, max drawdown)
+## Project layout (suggested)
 
-### Phase 2: Leakage Checker
-- Data leakage detection (future knowledge, scaler fit)
-- Universe consistency validation
-- Audit reports
+A typical structure looks like:
 
-### Phase 3: UI Integration
-- **3A:** Flask API endpoints for dashboard
-- **3B:** ML metrics widget (JavaScript)
-- **3C:** Supabase integration (optional persistent storage)
+- `alphalab_ml/` — Python package
+- `scripts/` — CLI entry points for training/inference
+- `notebooks/` — experiments (optional)
+- `data/` — local-only data (should be gitignored)
+- `outputs/` — generated artifacts (should be gitignored)
+- `tests/` — unit tests
+
+## Integration with `alphalab`
+
+The main `alphalab` app may treat this repo as an **optional dependency**.
+
+Common integration options:
+
+1. **Editable install (local dev)**
+
+```bash
+pip install -e ../alphalab-ml
+```
+
+2. **Package dependency**
+- Publish to a package index, or reference via Git URL in `requirements.txt`
+
+3. **Service mode**
+- Run a lightweight API in this repo (FastAPI/Flask) and have `alphalab` call it
+
+## Development
+
+### Linting / formatting
+If you use `ruff`:
+
+```bash
+ruff check .
+ruff format .
+```
+
+### Running tests
+If you use `pytest`:
+
+```bash
+pytest -q
+```
+
+## Reproducibility notes
+
+- Set random seeds for numpy/torch/sklearn where relevant
+- Log dataset versions and feature definitions
+- Save model artifacts with metadata (date, commit SHA, config)
+
+## License
+
+MIT
+
+## Related repos
+
+- `yijiesoo/alphalab` — main application / backtester
+- `yijiesoo/alphalab-ml` — this repo (ML model)
